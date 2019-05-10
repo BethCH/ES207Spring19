@@ -1,0 +1,425 @@
+---
+title: "ECH_es207hw7"
+author: "Beth Clifton Holcomb"
+date: "3/15/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Homework 7 Comparing Groups
+
+```{r}
+#read in data
+require(tidyverse, quietly = TRUE)
+# read in the csv and assign wq to be that file for the rest of the tasks
+wq <- suppressMessages(read_csv("data/BayDeltaWQ.csv", col_names = TRUE, na = c("NA", "n/p", "n/a"), guess_max = 30000))
+
+```
+
+```{r}
+#filter out field data for the top meter
+wq.f <- wq %>% 
+  filter(VarType == "Field" & Depth == 3)
+# and then only pull out relevant station codes 
+wq.f <- wq.f %>% 
+  filter(StationCode %in% c("C3", "D10", "D4", "D22", "D12", "D16", "D26", "D19", "MD10", "D28A", "P8", "C10", "D7", "D8", "D6", "D41"))
+head(wq.f)
+```
+
+## 1. What does the %n% do in the filter function in the code above?
+
+Like piping operator %>%, the %in% can be used to, in this case, apply the filter command to StationCode within the wq.f file without having to explicitely have that input in the function.
+
+```{r}
+library(ggthemes)
+p <- ggplot(wq.f, aes(x = SampleDate, y = Turbidity)) + 
+  geom_line() + facet_wrap(~StationCode, ncol = 3)
+p + theme_fivethirtyeight()
+
+```
+
+```{r}
+wq.f <- wq.f %>% 
+  filter(StationCode %in% c("C10", "D26", "C3", "D4", "D6", "D7", "D8")) %>% 
+  filter(between(SampleDate, as.Date("1975-01-01"), as.Date("2000-12-01")))
+#sanity check
+p <- ggplot(wq.f, aes(x = SampleDate, y = Turbidity)) + 
+  geom_line() + facet_wrap(~StationCode, ncol = 3)
+p + theme_bw()
+```
+
+```{r}
+library(lubridate)
+wq.f$year <- year(wq.f$SampleDate)  
+wq.y <- wq.f %>% 
+  group_by(StationCode, year) %>% 
+  summarize(meanTurb = mean(Turbidity), nTurb = n())
+head(wq.y)
+```
+
+```{r}
+# rank the data smallest to largest
+wq.y$rank <- rank(wq.y$meanTurb, ties.method = "average")
+# let me also make StationCode a factor to make my life easier later on in this analysis...
+wq.y$StationCode <- as.factor(wq.y$StationCode)
+head(wq.y)
+```
+
+```{r}
+# should be a straight line
+ggplot(wq.y, aes(x = rank, y = rank)) + geom_point()
+```
+
+```{r}
+# y ~ x where y = explainatory variable(factor) x = response variable
+rank.aov <- aov(rank ~ StationCode, data = wq.y)
+```
+
+```{r}
+# plot it!
+ggplot(wq.y, aes(x = StationCode, y = meanTurb)) + geom_boxplot() +
+  xlab("Station") + ylab ("Mean Annual Turbidity") 
+```
+
+```{r}
+# same thing but more handsome 
+library(ggthemes)
+ggplot(wq.y, aes(x = StationCode, y = meanTurb)) + geom_boxplot() + theme_tufte() +
+  xlab("Station") + ylab ("Mean Annual Turbidity")
+```
+
+```{r}
+# look at results and see what they say
+rank.aov
+```
+
+```{r}
+# summarize
+# want: big f value and very low p-value
+summary.aov(rank.aov)
+```
+
+```{r}
+# confint(rank.aov)
+head(confint(rank.aov))
+```
+
+## 2. Be creative. Plot these confidence intervals in a manner that enables you to better visualize them and compare across stations? 
+
+```{r}
+library(ggplot2)
+library(Rmisc)
+library(ggthemes)
+# set equation for mean Turbidity to be used in the plot
+meanTurbequa <- summarySE(data = wq.y, measurevar = "meanTurb", groupvars = c("StationCode"), na.rm = TRUE)
+# plot using the equation and aesthetic options to best display data
+ggplot(meanTurbequa, aes(x = StationCode, y = meanTurb, color = StationCode)) + geom_errorbar(aes(ymin = meanTurb-ci, ymax = meanTurb+ci, width = .5)) + geom_point(size = 1.5) + theme_tufte() + ggtitle("Mean Annual Turbidity by Station Code") +
+  xlab("Station") + ylab ("Mean Annual Turbidity") 
+```
+
+
+
+
+```{r}
+layout(matrix(c(1,2,3,4),2,2)) # optional layout
+plot(rank.aov) # diagnostic plots
+```
+
+```{r}
+plot(rank.aov, which = 1)
+```
+
+
+## 3. Go interrogate the data points for row 75. What station does it come from. What year? What is the value? Do you have an explanation for why this may be behaving as an outlier?
+
+```{r}
+wq.y[75,]
+```
+
+Row 75 is station D26 in 1997 wit no mean turbidity but n turbidity is 12. It's mean turbidity having a value of NA may be why it is not behaving like the rest of the values from the station. Initially i thought it was the 'nTurb' value but there are many stations with values of 11 or 12. There are, however, many stations that have 'NA' 'meanTurb' values that are ranke similarly to station D26 for 1997
+
+
+
+
+```{r}
+plot(rank.aov, which = 3)
+```
+
+```{r}
+plot(rank.aov, which = 2)
+```
+
+```{r}
+plot(rank.aov, which = 4)
+```
+
+## 4. Go interrogate the data points for rows 72, 75 and 76. What stations do they come from. What year? What are the values? Do you have an explanation for why these may be behaving as outliers?
+
+```{r}
+wq.y[72:76,]
+```
+
+Row 72, 75, and 76 are all for station D26 with NA mean turbidity. They are for 1994, 1997, and 1998 respectfully. I wonder if the NA value makes them outliers because many of the outliers are all ranked similarly and these 3 are no exception 
+
+```{r}
+classic.aov <- aov(meanTurb ~ StationCode, data = wq.y)
+summary(classic.aov)
+```
+
+```{r}
+head(confint(classic.aov))
+```
+
+```{r}
+layout(matrix(c(1,2,3,4),2,2)) # optional layout 
+plot(classic.aov) # diagnostic plots
+```
+
+
+## 5. Compare the CIs from the rank-transformed ANOVA and the non-transformed ANOVA. Next, Compare the diagnostic plots between the transformed and un-transformed data. Use plots as appropriate. What can you conclude about the power of our hypothesis test for the Bay Delta WQ data? Is mean annual turbidity significantly different between stations in the Delta? Are we in danger of committing Type I or Type II errors? Explain your reasoning.
+
+
+```{r}
+Ranked1 <- tibble('Station' = sort(unique(wq.y$StationCode)))
+for_plot <- as.data.frame(confint(rank.aov))
+Ranked <- bind_cols(Ranked1, for_plot)
+Ranked
+```
+
+
+```{r}
+# Brittany helped so much with this
+# create a tibble with the station codes that were selected in the most filtered water quality file: wq.y
+Classic1 <- tibble('Station' = sort(unique(wq.y$StationCode)))
+# make a data frame using data created from running 'confint' command on the classic aov results
+for_plot <- as.data.frame(confint(classic.aov))
+# bind the columns from the data frame to the tibble for the station codes 
+Classic <- bind_cols(Classic1, for_plot)
+# prove you did what i told you to do
+Classic
+```
+
+
+I found this source for the following table: http://www.sixhat.net/how-to-plot-multpile-data-series-with-ggplot.html
+
+
+# Compare the CIs from the rank-transformed ANOVA and the non-transformed ANOVA.
+
+```{r}
+library(ggplot2)
+df <- data.frame(Ranked$Station, Ranked, Classic)
+ggplot() +
+    geom_point(aes(x = Ranked$Station, y = Ranked$`2.5 %`, col = "Ranked AOV")) + 
+  geom_point(aes(x = Ranked$Station, y = Ranked$`97.5 %`, col = "Ranked AOV")) +
+    geom_point(aes(x = Classic$Station, y = Classic$`2.5 %`, col = "Classic AOV")) + geom_point(aes(x = Classic$Station, y = Classic$`97.5 %`, col = "Classic AOV")) + theme_tufte() + ggtitle("Classic AOV vs Ranked AOV Confidence Interval") +
+  xlab("Station") + ylab ("Confidence Interval")
+    
+```
+
+# Next, Compare the diagnostic plots between the transformed and un-transformed data. Use plots as appropriate.
+
+```{r}
+plot(classic.aov)
+```
+
+```{r}
+plot(rank.aov)
+```
+
+# What can you conclude about the power of our hypothesis test for the Bay Delta WQ data?
+
+The confidence intervals for the ranked aov are much wider than the CIs for the classic AOV. Even just looking at the ranked OR or the classic, there's iconsistency to the means which but using the ranked CIs would push me to reject the Null. 
+
+# Is mean annual turbidity significantly different between stations in the Delta?
+
+yes, the CIs surround the mean which indicates that the means vary, though there may not be significance in the 'original' aov.
+
+# Are we in danger of committing Type I or Type II errors?
+
+Type II, rejecting a true null, is the error i feel like this could result in if there is an error. 
+
+## 6. What can we conclude if we compare the the rank transformed ANOVA versus the Kruskal-Wallis Test?
+
+```{r}
+rank.aov
+```
+
+
+```{r}
+kw <- kruskal.test(meanTurb ~ StationCode, data = wq.y)
+kw
+```
+
+The p-values are very low and indicate that the means are are not the same, thus rejecting the null
+
+## 7. Group the water quality data by station, as in the previous example, and this time calcuate the mean annual turidity for each station using the definition of a water year. Hint: the lubridate package is handy for manipulating dates.
+
+used this: https://stackoverflow.com/questions/27626533/r-create-function-to-add-water-year-column
+
+```{r}
+wtr_yr <- function(dates, start_month=9) {
+  # Convert dates into POSIXlt
+  dates.posix = as.POSIXlt(dates)
+  # Year offset
+  offset = ifelse(dates.posix$mon >= start_month - 1, 1, 0)
+  # Water year
+  adj.year = dates.posix$year + 1900 + offset
+  # Return the water year
+  adj.year
+}
+```
+
+```{r}
+library(lubridate)
+wq.f$water.year <- wtr_yr(wq.f$SampleDate)  
+wq.wy1 <- wq.f %>% 
+  group_by(StationCode, water.year) %>% 
+  summarize(meanTurb = mean(Turbidity), nTurb = n())
+head(wq.wy1)
+```
+
+```{r}
+wq.wy2 <- wq.wy1 %>% 
+  filter(StationCode %in% c("C10", "D26", "C3", "D4", "D6", "D7", "D8"))
+#wq.wy2
+```
+
+
+
+
+
+## 8.Compute Tukey’s HSD test to determine which Stations have similar calendar-year annual mean turbidity.
+
+```{r}
+meanTukey <- TukeyHSD(classic.aov, which = 'StationCode')
+meanTukey
+```
+
+## 9. Determine whether there is an overall group-wise difference between mean annual turbidity calculated by the calendar year and mean annual turbidity calculated by the water year. If there is a signifigant difference, perform a post-hoc test to determine which stations have similar annual mean turbidity values regardless of how you calculate it. Justify your choice of test (e.g., parametric, non-parametric). Can you speculate on why there are or are not differences? Show your work.
+
+1. Null = all the means are the same no matter how it is calculated
+2. Visually evaluate the data by plotting
+2. if there is visible difference use a test to determine if the difference is significant
+3. the above analysis showed that the data is nonparametric 
+4. do nonparametric analysis comparing the data sets: Wilcox test, and t-test
+5. IF these results show significant difference, continue with additional tests, if not continue to 6
+6. if tests prove not to show significant difference, the Null cannot be rejected = LIVE YOUR NULL!!
+
+```{r}
+b <- ggplot(wq.wy, aes(x = SampleDate, y = Turbidity)) + 
+  geom_line() + facet_wrap(~StationCode, ncol = 3)
+p + theme_bw()
+```
+
+
+```{r}
+wq.wy2$rank <- rank(wq.wy2$meanTurb, ties.method = "average")
+# let me also make StationCode a factor to make my life easier later on in this analysis...
+wq.wy2$StationCode <- as.factor(wq.wy2$StationCode)
+head(wq.wy2)
+# ggplot(wq.wy, aes(x = rank, y = rank)) + geom_point()
+```
+
+```{r}
+ggplot(wq.wy2, aes(x = StationCode, y = meanTurb)) + geom_boxplot() +
+  xlab("Station") + ylab ("Mean Annual Turbidity") 
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = wq.y, aes(x = wq.y$meanTurb, y = wq.y$StationCode, col = "Calendar Year Mean")) +
+  geom_line(data = wq.wy2, aes(x = wq.wy2$meanTurb, y = wq.wy2$StationCode, col = "Water Year Mean"))
+
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = wq.y, aes(x = wq.y$year, y = wq.y$meanTurb, col = wq.y$StationCode)) +
+  geom_point(data = wq.wy2, aes(x = wq.wy2$water.year, y = wq.wy2$meanTurb, col = wq.wy2$StationCode))
+```
+
+
+```{r}
+# Wilcox test for all mean turbidity
+wilcox.test(wq.y$meanTurb, wq.wy2$meanTurb)
+```
+
+```{r}
+# Wilcox test for C10
+wq.wyC10 <- wq.wy2 %>% 
+  filter(StationCode %in% c("C10"))
+#wq.wy2
+wq.yC10 <- wq.y %>%
+  filter(StationCode %in% c("C10"))
+wilcox.test(wq.wyC10$meanTurb, wq.yC10$meanTurb)
+```
+
+```{r}
+mean(wq.wyC10$meanTurb, na.rm = TRUE)
+```
+
+```{r}
+mean(wq.yC10$meanTurb, na.rm = TRUE)
+```
+
+
+```{r}
+# Wilcox test for D7
+wq.wyD7 <- wq.wy2 %>% 
+  filter(StationCode %in% c("D7"))
+#wq.wy2
+wq.yD7 <- wq.y %>%
+  filter(StationCode %in% c("D7"))
+wilcox.test(wq.wyD7$meanTurb, wq.yD7$meanTurb)
+```
+
+```{r}
+mean(wq.yD7$meanTurb, na.rm = TRUE)
+```
+```{r}
+mean(wq.wyD7$meanTurb, na.rm = TRUE)
+```
+
+
+Wilcox test results for the total data and for a couple of the individual stations, there is not a strong enough p value to reject the Null at this time
+
+```{r}
+t.test(wq.wy2$meanTurb, wq.y$meanTurb)
+```
+
+```{r}
+# t-test for station D8
+wq.wyD8 <- wq.wy2 %>% 
+  filter(StationCode %in% c("D8"))
+#wq.wy2
+wq.yD8 <- wq.y %>%
+  filter(StationCode %in% c("D8"))
+t.test(wq.wyD8$meanTurb, wq.yD8$meanTurb)
+```
+
+```{r}
+# t-test for station D4
+wq.wyD4 <- wq.wy2 %>% 
+  filter(StationCode %in% c("D4"))
+#wq.wy2
+wq.yD4 <- wq.y %>%
+  filter(StationCode %in% c("D4"))
+t.test(wq.wyD4$meanTurb, wq.yD4$meanTurb)
+```
+
+
+
+
+Though the t-test resulted in a bit more convincing p value, the confidence intervals are very large and these results arrive at the same conclusion as the Wilcox test, not rejecting the Null
+
+
+Results: Cannot reject the null. 
+
+
+
+
+
+

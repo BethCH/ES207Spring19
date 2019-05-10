@@ -1,0 +1,117 @@
+---
+# Beth Clifton Holcomb
+# ES 207
+
+title: "Homework Assignment 1"
+output: html_document
+
+# question 1. 
+> x<-c(1,2,4)
+> x[4]
+# result = [1] NA because there is no 4th value
+
+#question 2.
+> q <- c(x,x,8)
+# Try creating a variable "s" that is the standard deviation of q
+> s <- sd(q)
+# > s
+# [1] 2.478479
+
+# question 3.
+# Can you make R write your name?
+> paste( "Beth" , "Clifton" , "Holcomb")
+# [1] "Beth Clifton Holcomb"
+> paste("Beth Clifton Holcomb")
+# [1] "Beth Clifton Holcomb"
+
+# question 4.
+# What objects are left in your R session after removing m?
+
+# > ls()
+# [1] "a" "b" "c" "d" "m" "q" "s" "x" "y"
+# > rm (m)
+# > rm(m)
+# Warning message:
+# In rm(m) : object 'm' not found
+> ls()
+[1] "a" "b" "c" "d" "q" "s" "x" "y"
+
+# question 5.
+> oddcount <- function(x)
++ {
++     k <- 0
++     for (n in x) {
++         if(n %% 2 == 1)
++         {
++             k <- k+1 
++         }
++     }
++     return(k)
++ }
+
+# > oddcount
+# function(x)
+# {
+#     k <- 0
+#     for (n in x) {
+#         if(n %% 2 == 1)
+#        {
+#            k <- k+1 
+#         }
+#     }
+#     return(k)
+# }
+# <bytecode: 0x104762ce8>
+> oddcount(x <- c(1,3,5))
+[1] 3
+> oddcount(x <- c(1,2,3,7,9))
+[1] 4
+# this function counts the number of odd numbers in a vector. in the case of c(1,3,5) there are 3 as seen in the result [1] 3 . in the last vector: c(1,2,3,7,9), there were 4 displayed in the result [1] 4
+
+# question 6.
+# Try creating a new function 'evencount' that counts the even numbers in a vector.
+
+> evencount <- function(x)
++ {
++     k <- 0
++     for (n in x) {
++         if(n %% 2 == 0)
++         {
++             k <- k+1 
++         }
++     }
++     return(k)
++ }
+
+>evencount(x <- c(1,2,3,4,5,6,7))
+[1] 3
+
+>evencount(x <- c(2,4,6,8,10,11,13))
+[1] 5
+
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

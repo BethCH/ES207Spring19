@@ -1,0 +1,332 @@
+---
+title: "ECH_HW2Feb14"
+author: "Beth Clifton Holcomb"
+date: "2/14/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. How can you find out where an error occurred?
+
+Browser, debug, and setBreakpoint are all tools that allow for determining where an error occured. Each does so in different ways. Browser lets you run a code one line at a time allowing for issues to be expressed one line at a time. Debug also goes through the code line by line. it uses the browser mode for this. While going through line by line is awesome, setBreakpoint is useful when there's a lot of code but the issue is only in a specific section. setBreakpoint can be put there to work through that chunk without worrying about the rest. 
+
+# 2. What does browser() do? List the 5 sing-key commands that you can use in the browser() environment.
+
+browser tests a text, condition, expression, or previous calls from the environment. It also pauses a function where it is called from. 
+
+5 commands: n, s, r, Q, f
+
+# 3. Debug the function below. Demonstrate all of your steps, provide the correction function with clear documentation, and provide confirmation it works as expected. 
+
+```{r}
+ciao <- function (x) {
+  if (x == 0) 
+    print("Buongiorno!")
+        else
+    print("Arrivederci!")
+} 
+ciao(4)
+ciao(0)
+```
+a. check out (), {}, and [].
+there is an extra ) after salutation
+b. run 
+c. error with x=
+d. should the = be ==?
+e. there are two 'else'
+f. no more errors! but does it work?
+g. change the commands within the if else statement to output the desired result
+h. test with numbers to check that both returns are as expected
+
+# 4. The following function “lags” a vector, returning a version of x that is n values behind the original. Improve the function so that it (1) returns a useful error message if n is not a vector, and (2) has reasonable behavior when n is 0 or longer than x.
+
+
+```{r}
+x <- c(3,4,5,6,7,8,9) #define x
+lag <-  function (x, n=1L) { #lag is a function for x that uses the n to determine length
+  if (is.numeric(n)){ # if the stuff in x is numeric keep running
+    xlen <- length(x) # defining xlen as the length of x
+  n <- min(xlen,n) # defining n as the minimum of xlen and n from where they were defined above 
+  c(rep(NA,n), x[seq_len(xlen-n)])}
+          else
+          print("n is not a vector")
+  # print 'type of'
+}
+# block out the first line and assign x as something you wish to test
+
+```
+
+```{r}
+print(x)
+```
+
+```{r}
+lag(x,n=3L)
+```
+
+
+
+# 5. Write a function that calculates the mean, median, standard deviation, interquartile range, and skew. Apply that function to EC data and Secchi Disk depth. 
+
+```{r}
+library(tibble)
+library(ggplot2)
+library(dplyr)
+library(moments)
+wq.dat <- read.csv("Data/BayDeltaWQ.csv") 
+#read.csv means i have to make it a tibble later / read_csv already makes it a tibble
+#head(wq.dat)
+wq.tib <- as_tibble(wq.dat) #using read_csv makes this unnecessary 
+wq.P5 <- select(wq.tib, SampleDate, StationCode, Conductance..EC., Secchi.Depth)
+# mean(wq.P5$Conductance..EC., na.rm = TRUE)
+
+```
+
+```{r}
+P5_fun <-function(x) {
+  wq.fun <-c(mean, median, sd, IQR, skewness)
+  lapply(wq.fun,function(f)f(x, na.rm = T))
+  }
+P5_Con <- P5_fun(wq.P5$Conductance..EC.)
+names(P5_Con) <- c("Conductance Mean", "Conductance Median", "Conductance Standard Deviation", "Conductance IQR", "Conductance Skew")
+P5_Con
+
+#names(my.models) <- formulas
+#my.models
+```
+
+```{r}
+P5_fun <-function(x) { #open function
+  #define the function that will be applied for Problem 5
+  wq.fun <-c(mean, median, sd, IQR, skewness)
+  # concatinate the functions into wq.fun (water quality functions)
+  lapply(wq.fun,function(f)f(x, na.rm = T))
+  # apply to a list x = list of functions wq.fun; function (of the thing f) f of item x while ignoring NAs
+  } # close function
+P5_SD <- P5_fun(wq.P5$Secchi.Depth) #name the output and then apply the function P5_fun to the desired column in the desired document 
+names(P5_Con) <- c("Secchi Mean", "Secchi Median", "Secchi Standard Deviation", "Secchi IQR", "Secchi Skew") # apply names to the answers put out in P5_Con. names are put in in the same order and the functions are output
+P5_Con
+```
+
+# In 300 words or less discuss the differences between these measures and what conclusions you can draw about the data.
+
+## Difference between Conductance and Secchi
+
+Conductance measures how well water conducts electricity. Secchi depth is the depth at which the tester can no longer see the Secchi disk. Conductance increases with salinity so in a freshwater lake, conductance could indicate a larger issue in the water. At the same time, Secchi depth decreases with turbidity which could also indicate a poor water quality issue. 
+
+## Difference between mean, median, sd, IQR, and skewness
+
+Mean is the average of a reading, median is the measurement that falls in the middle of the observations, standard deviation measures the extent of variation or dispersion in a data set. IQR or interquartile range is the range between the upper bound (75th percentile) of the top and lower bound (25th percentile) of the low middle quartiles. IQR measures statistical dispersion. In normal distribution examples, it would be the big hump in the middle of the curve, leaving out the tails. Skewness is the measurement of asymmetry in the distribution of the samples. Each of these measurements is different and usually cannot be directly compared but mean and median should ideally be similar while IQR, skewness, and sd should be comparible to each other. 
+
+# 6. Plot the histogram, boxplot, and cumulative desnity of EC data in the Bay-Delta for EACH station
+
+```{r}
+wq.dat <- read.csv("Data/BayDeltaWQ.csv") #read.csv means i have to make it a tibble later / read_csv already makes it a tibble
+#head(wq.dat)
+wq.tib <- as_tibble(wq.dat) #using read_csv makes this unnecessary 
+wq.P6 <- select(wq.tib, SampleDate, StationCode, Conductance..EC.)
+# head(wq.P6)
+```
+
+
+
+```{r}
+# draws a histogram of entire thing
+ec_hist <- ggplot(wq.P6, aes(Conductance..EC.)) + geom_histogram(binwidth = 8000)
+ec_hist
+```
+
+```{r}
+# draws a box plot of entire thing
+ec_box <- ggplot(wq.P6, aes(x = '', y = Conductance..EC.)) + geom_boxplot()
+ec_box
+```
+
+```{r}
+#draws a ecdf of entire thing
+ec_ecdf <- ecdf(wq.P6$Conductance..EC.) 
+plot(ec_ecdf, xlab = 'Conductance')
+ec_ecdf
+```
+
+
+```{r}
+# splits to a list by station code 
+listEC <- split(wq.P6, wq.P6$StationCode)
+new_names <- c("one", "two", "three")
+for (i in 1:length(listEC)) {
+  assign(new_names[i],listEC[[i]])
+}
+```
+
+
+```{r}
+#creates a histogram for a single Station Code
+trial1 <- wq.P6[wq.P6$StationCode == 'D11', ]
+Trial1_hist <- ggplot(trial1, aes(Conductance..EC.)) + geom_histogram()
+
+Trial1_hist
+
+```
+
+```{r}
+#makes a histogram by Conductance showing different stations
+p6.histogram <- ggplot(wq.P6, aes(Conductance..EC.)) 
+p6.histogram + geom_bar(aes(fill=StationCode), width=2000)
+```
+
+
+```{r}
+# makes a histogram by Station Code 
+# the conductance of each station is now comparible to each other
+p6.hist <- ggplot(wq.P6, aes(StationCode)) 
+p6.hist + geom_bar(aes(fill=Conductance..EC.), width=.5) + theme(axis.text = element_text(angle = 65, vjust = .6)) + labs(title = "Histogram on Conductance", subtitle = "Categorized by Station Code")
+```
+
+
+
+
+```{r}
+# doesn't work but is supposed to plot by station code
+#plots all stations on one histogram and color codes each station
+# library(plyr)
+# p = ggplot(wq.P6, aes(Conductance..EC., )) + geom_histogram()
+# dlply(wq.P6, 'StationCode')
+# plots = dlply(wq.P6, 'StationCode')
+
+
+# ECplots = dlply(.data = wq.P6, .(StationCode))
+```
+
+```{r}
+#doesn't work
+# ggplot(subset(df,'StationCode') + geom_histogram(aes(StationCode, group=StationCode, colour=StationCode)))
+```
+
+
+```{r}
+#seems to plot by conductance for all Stations Codes individually 
+# the conductance is not really comparible. it can, however, been seen the concentration of conductance readings is visually skewed in one direction
+library(plyr)
+library(dbplyr)
+ggplot(data=wq.P6) + geom_histogram(aes(Conductance..EC., group=StationCode, colour=StationCode), , subset = .(StationCode %in% c("D10","C3")), na.rm = TRUE)
+```
+
+
+
+
+
+```{r}
+#draw a box plot for each Station Code
+p6.boxplot <- ggplot(wq.P6, aes(StationCode, Conductance..EC.))
+#assign a new thing <- ggplot.command(what you're doing the thing to, the aesthetic that will be visualized(the column being shown, colour = what characteristic the column will be broken up by))
+p6.boxplot + geom_boxplot(varwidth = T, fill = "blue") + theme(axis.text.x = element_text(angle=65, vjust=.6)) + labs(title = "Box Plot of Station Code and Conductance", x = "Station Code", y = "Conductance")
+```
+
+
+
+```{r} 
+#draw a box plot for each Station Code 
+## this layout looks terrible and is not very useful. but it's a box plot
+p6.box <- ggplot(wq.P6, aes(Conductance..EC., StationCode))
+#assign a new thing <- ggplot.command(what you're doing the thing to, the aesthetic that will be visualized(the column being shown, colour = what characteristic the column will be broken up by))
+p6.box + geom_boxplot(varwidth = T, fill = "blue") + theme(axis.text.x = element_text(angle=65, vjust=.6)) + labs(title = "Box Plot of Station Code and Conductance", x = "Conductance", y = "Station Code")
+# take that thing you made, DRAW IT, make it blue, + theme (change the angle so we can read the stuff you're trying to say) + give it a title and headers
+```
+
+
+```{r}
+# draw ecdf for each station
+p6.ecdf <- ggplot(wq.P6, aes(Conductance..EC., colour = StationCode))
+#assign a new thing <- ggplot.command(what you're doing the thing to, the aesthetic that will be visualized(the column being shown, colour = what characteristic the column will be broken up by))
+p6.ecdf + stat_ecdf()
+# take that thing you made and DRAW IT
+```
+
+
+
+#7. Compare the mercury concentrations from the stations with the highest concentration and the lowest concentration using a Q-Q plot. Also put two other types of graphs that can be used to compare mercury concentrations at the two stations. In 300 words or less describe the similarities and differences in concetrations at the two stations. What characteristics are evident in each graph? 
+
+```{r}
+
+wq.dat <- read.csv("Data/BayDeltaWQ.csv") #read.csv means i have to make it a tibble later / read_csv already makes it a tibble
+#head(wq.dat)
+wq.tib <- as_tibble(wq.dat) #using read_csv makes this unnecessary 
+wq.P7 <- select(wq.tib, SampleDate, StationCode, Mercury..Total.)
+#wq.P7 <- as.numeric(wq.P7a)
+# head(wq.P7)
+```
+
+D9 has the longest string of high readings
+D26 has the longest string of low readings
+
+```{r}
+#qq plot of D9 and D26
+P7.qq1 <- filter(wq.P7, StationCode == "D9" | StationCode == "D26" )
+P7.qq2 <- select(P7.qq1, SampleDate, StationCode, Mercury..Total., )
+P7.qq2 %>%
+  filter(StationCode == "D9" | StationCode == "D26") %>%
+  ggplot(mapping = aes(sample = Mercury..Total., col = StationCode)) + stat_qq()
+
+
+```
+
+
+
+
+```{r}
+#compares reading distribution between the D9 and D26
+ggplot(P7.qq2, aes(y = Mercury..Total., x = StationCode, col = StationCode)) + geom_jitter(position = position_jitter(width = .1, height = 0))
+```
+
+```{r}
+#plot all stations with readings
+P7.qq3 <- filter(wq.P7, StationCode == "D9" | StationCode == "D26" | StationCode == "C10" | StationCode == "C3" | StationCode == "C7" | StationCode == "C9" | StationCode == "D10" | StationCode == "D11" | StationCode == "D12" | StationCode == "D14A" | StationCode == "D15" | StationCode == "D19" | StationCode == "D2" | StationCode == "D24" | StationCode == "D4" | StationCode == "D28A" | StationCode == "D6" | StationCode == "D7" | StationCode == "P10" | StationCode == "P2" | StationCode == "P8")
+
+P7.qq4 <- select(P7.qq3, SampleDate, StationCode, Mercury..Total., )
+P7.qq4 %>%
+  filter(StationCode == "D9" | StationCode == "D26" | StationCode == "C10" | StationCode == "C3" | StationCode == "C7" | StationCode == "C9" | StationCode == "D10" | StationCode == "D11" | StationCode == "D12" | StationCode == "D14A" | StationCode == "D15" | StationCode == "D19" | StationCode == "D2" | StationCode == "D24" | StationCode == "D4" | StationCode == "D28A" | StationCode == "D6" | StationCode == "D7" | StationCode == "P10" | StationCode == "P2" | StationCode == "P8") %>%
+  ggplot(mapping = aes(sample = StationCode, col = Mercury..Total.)) + stat_qq()
+```
+
+While there were supposed to be two additional charts of the Hg data for the two stations, I found it far more telling to see the variety between the stations that did have readings. Skimming the data produces a perception of little variation between the stations while the comparison of only 2 stations produced polar differences. For me, this visualization showing the diversity in readings across station sites and time is far more indicative of an interesting research avenue presenting itself. 
+
+```{r}
+# makes a plot by station code jittering around the readings
+ggplot(wq.P7, aes(y = Mercury..Total., x = StationCode, col = StationCode)) + geom_jitter(position = position_jitter(width = .1, height = 0))
+```
+
+## In 300 words or less describe the similarities and differences in concetrations at the two stations. What characteristics are evident in each graph? 
+
+In the two stations I chose, D9 and D26, i found the largest range in readings for the longest period of time. I am not sure where these readings were taken but just with this analysis, there are (was because the readings were done over two decades ago) major differences in these water bodies. What those differences are cannot be determined with a simple analysis of a single reading but are indicative of a potentially interesting research question. Because the analysis was only in Mg, the only inference that can be made about characteristics of the water bodies to me is that one may have larger human impacts than the other or some other input that has caused increased Hg levels. 
+
+
+
+
+
+
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

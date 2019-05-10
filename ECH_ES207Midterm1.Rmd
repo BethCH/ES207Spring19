@@ -1,0 +1,345 @@
+---
+title: "ECH_ES207Midterm1"
+author: "Beth Clifton Holcomb"
+date: "3/25/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## ES 207 Midterm Part A: Programming in R
+
+# Ozone is a powerful antioxidant that can cause severe irritation in the respiratory system (good for disinfection, but bad for lungs!) In 2015, the EPA revised the primary and secondary national ambient air quality standards (NAAQS).
+
+# 2008 standard: .075 ppm (parts per million) for a doaily 8-hour average
+
+# 2015 standard: .070
+
+## Question 1: 
+
+# For the country of Merced, is there a significant difference in the number of days in a year that exceed EPA ozone standards as defined by the 2008 NAAQ versus the 2015 NAAQ? If so, what is the magnitude of the difference? Consider this for the following years: 2018, 2008, 1998, and 1991. Provide a 250-500 word interpretation of your results. Please cite all outside references (e.g., papers, government reports) used to support your interpretation.
+
+1. Null = no difference
+2. count the number of days that exceed 2008 standards in each file
+3. count the number of days that exceed 2015 standards in each file
+4. compare
+5. test difference
+
+```{r}
+# no 
+NAAQ08 <- .070
+NAAQ15 <- .075
+
+```
+
+```{r}
+# no
+ozone.filenames <- list.files("Data/merced_ozone", pattern = ".csv")
+# pull in all the files into a list from the provided location that have the pattern
+ozone.filenames
+# show me the results
+```
+
+
+```{r}
+# no
+# library(stringr, quietly = TRUE)
+# same as above
+# ozone.filenames <- list.files("Data/merced_ozone", pattern = ".csv")
+# ozone.filenames
+# setwd("data/merced_ozone")
+# ozone.filelist <- lapply(ozone.filenames, read_delim, delim = "|")
+# names(ozone.filelist) <- str_replace_all(ozone.filenames,".csv","")
+#str_replace_all subs for gsub which takes the .txt off the name in o3b.filelist
+# head(ozone.filelist)
+```
+
+# 1991 measurements
+
+```{r}
+library(tibble)
+library(dplyr)
+data91csv <- read.csv("Data/merced_ozone/ad_viz_plotval_data91.csv") #read.csv means i have to make it a tibble later / read_csv already makes it a tibble
+#head(wq.dat)
+data91.tib <- as_tibble(data91csv) #using read_csv makes this unnecessary 
+data91 <- select(data91.tib, Date, Daily.Max.8.hour.Ozone.Concentration, UNITS)
+head(data91)
+```
+
+```{r}
+# data91 <- as.numeric(data91a$Daily.Max.8.hour.Ozone.Concentration)
+data91_08 <- sum(data91$Daily.Max.8.hour.Ozone.Concentration >= .075)
+data91_08
+```
+
+```{r}
+data91_15 <- sum(data91$Daily.Max.8.hour.Ozone.Concentration >= .070)
+data91_15
+```
+
+
+
+# 1998 measurements 
+
+```{r}
+library(tibble)
+library(dplyr)
+data98csv <- read.csv("Data/merced_ozone/ad_viz_plotval_data98.csv") #read.csv means i have to make it a tibble later / read_csv already makes it a tibble
+#head(wq.dat)
+data98.tib <- as_tibble(data98csv) #using read_csv makes this unnecessary 
+data98 <- select(data98.tib, Date, Daily.Max.8.hour.Ozone.Concentration, UNITS)
+head(data98)
+```
+
+```{r}
+data98_08 <- sum(data98$Daily.Max.8.hour.Ozone.Concentration >= .075)
+data98_08
+```
+
+```{r}
+data98_15 <- sum(data98$Daily.Max.8.hour.Ozone.Concentration >= .070)
+data98_15
+```
+
+
+# 2008 measurements
+
+```{r}
+library(tibble)
+library(dplyr)
+data08csv <- read.csv("Data/merced_ozone/ad_viz_plotval_data08.csv") #read.csv means i have to make it a tibble later / read_csv already makes it a tibble
+#head(wq.dat)
+data08.tib <- as_tibble(data08csv) #using read_csv makes this unnecessary 
+data08 <- select(data08.tib, Date, Daily.Max.8.hour.Ozone.Concentration, UNITS)
+head(data08)
+```
+
+```{r}
+data08_08 <- sum(data08$Daily.Max.8.hour.Ozone.Concentration >= .075)
+data08_08
+```
+
+```{r}
+data08_15 <- sum(data08$Daily.Max.8.hour.Ozone.Concentration >= .070)
+data08_15
+```
+
+# 2018 measurements 
+
+```{r}
+library(tibble)
+library(dplyr)
+data18csv <- read.csv("Data/merced_ozone/ad_viz_plotval_data18.csv") #read.csv means i have to make it a tibble later / read_csv already makes it a tibble
+#head(wq.dat)
+data18.tib <- as_tibble(data18csv) #using read_csv makes this unnecessary 
+data18 <- select(data18.tib, Date, Daily.Max.8.hour.Ozone.Concentration, UNITS)
+head(data18)
+```
+
+```{r}
+data18_08 <- sum(data18$Daily.Max.8.hour.Ozone.Concentration >= .075)
+data18_08
+```
+
+
+```{r}
+data18_15 <- sum(data18$Daily.Max.8.hour.Ozone.Concentration >= .070)
+data18_15
+```
+
+
+come back to this
+```{r}
+#OzoneResults <- matrix(c(data91_08, data91_15, data98_08, data98_15, data08_08, data08_15, data18_08, data18_15) ncol = 2)
+```
+
+
+# Compare
+```{r}
+data91_08
+data91_15
+```
+
+```{r}
+data98_08
+data98_15
+```
+
+```{r}
+data08_08
+data08_15
+```
+
+
+```{r}
+data18_08
+data18_15
+```
+
+# test
+```{r}
+# run Wilcox rank sum test comparing 91 and 98
+wilcox.test(data91$Daily.Max.8.hour.Ozone.Concentration, data98$Daily.Max.8.hour.Ozone.Concentration, conf.int = TRUE)
+```
+
+```{r}
+# run Wilcox rank sum test comparing 91 to 08
+wilcox.test(data91$Daily.Max.8.hour.Ozone.Concentration, data08$Daily.Max.8.hour.Ozone.Concentration, conf.int = TRUE)
+```
+
+```{r}
+# run Wilcox rank sum test comparing 91 to 18
+wilcox.test(data91$Daily.Max.8.hour.Ozone.Concentration, data18$Daily.Max.8.hour.Ozone.Concentration, conf.int = TRUE)
+```
+
+```{r}
+# run Wilcox rank sum test comparing 98 to 08
+wilcox.test(data98$Daily.Max.8.hour.Ozone.Concentration, data08$Daily.Max.8.hour.Ozone.Concentration, conf.int = TRUE)
+```
+
+```{r}
+# run Wilcox rank sum test comparing 98 to 18
+wilcox.test(data98$Daily.Max.8.hour.Ozone.Concentration, data18$Daily.Max.8.hour.Ozone.Concentration, conf.int = TRUE)
+```
+
+```{r}
+# run Wilcox rank sum test comparing 08 to 18
+wilcox.test(data08$Daily.Max.8.hour.Ozone.Concentration, data18$Daily.Max.8.hour.Ozone.Concentration, conf.int = TRUE)
+```
+
+
+In each year examined, there is a difference in the exceedance days between the two standards. In some years, such as 1991, it doesn't seem to be as heavy of an increase but 4 of 82 days (the number of observations that year) is a nearly 5% (4.87%) increase. In 1998, a 15 day increase represents a 4.3% increase. 2008 also had a 4.3% increase with 15 days added exceeding the limit  considering the 349 observations avialable, and 2018 had a 5.26% uptick in days over the limit with 361 observations. These results do not reflect a 365 day observation data set. In the case of 1991 results, if there had been 4 days added over a full year of observations, there would have been just over 1% (1.09%) of an increase. but with the number of measurements so low, it seems as though there is roughly the same increase in number of days exceeding the 2015 regulations compared to 2008 regulations as with the other 3 years test. In 2016, the California EPA released a fact sheet to the public (available here: https://ww3.arb.ca.gov/research/aaqs/caaqs/ozone/ozone-fs.pdf) discussing the improvement in recent years of high ozone days while also emphasising the further need for ozone reduction. This information aligns with the result that saw an overall reduction in ozone levels in 2018 compared to 2008 and 1998. Using the Wilcoxon rank test found in the slides, the distance between each of the years is very small, less that .01. While the number of days above the limit is different in each year, I cannot reject the Null that there is no difference.
+
+
+
+
+## Question 2: 
+
+# Is there a significant difference in ozone concentration between years (1991, 1998, 2008, 2018)? If so, what is possibly driving that difference. Provide a 250-500 word interpretation of your results. Please cite all outside references (e.g., papers, government reports) used to support your interpretation.
+
+1. Null = no significant difference in ozone concentration
+2. visualize data to compare
+3. evaluate the data for mean, median, mode, SD, IQR, and skew
+4. statistically compare years
+5. results
+
+# Visualize Data Sets
+
+```{r}
+library(ggthemes)
+library(ggplot2)
+# plot the 4 year's data sets to visually assess the comparison between years looking for differences among them
+ggplot() +
+geom_point(data = data91, aes(x = data91$Date, y = data91$Daily.Max.8.hour.Ozone.Concentration, col = "Ozone 91")) +
+  geom_point(data = data98, aes(x = data98$Date, y = data98$Daily.Max.8.hour.Ozone.Concentration, col = "Ozone 98")) +
+  geom_point(data = data08, aes(x = data08$Date, y = data08$Daily.Max.8.hour.Ozone.Concentration, col = "Ozone 08")) +
+  geom_point(data = data18, aes(x = data18$Date, y = data18$Daily.Max.8.hour.Ozone.Concentration, col = "Ozone 18")) + theme_economist() + ggtitle("Ozone Concentration by Year") +
+  xlab("Date Jan - Dec") + ylab ("Ozone Concentration")
+```
+
+Looking at the data for each year compared to each other, there are clearly consistent patterns of ozone in the beginning of the year and the end of the year. However, each annual set diverges in the summer months which create the scattered uptick in the graph. Unfortunately, this graph also draws attention to the incomplete data set provided for 1991. This year will not be removed from analysis, but any conclusions that are resulting from comparison with this particular year will have to be examined specifically becasue of a higher weight given to each point that year. Because there is a noticable area where each data set behaves differently, it is worth examining it further to determine if these readings are substantial enough to call the differences significant. 
+
+
+
+# Evaluate Data Values
+
+
+```{r}
+# make a function to get mode
+GetMode <- function(a) {
+   uniqv <- unique(a)
+   uniqv[which.max(tabulate(match(a, uniqv)))]
+#   median(a)
+#   mean(a, na.rm = TRUE)
+}
+```
+
+
+```{r}
+# mean median mode
+mean91 <- mean(data91$Daily.Max.8.hour.Ozone.Concentration, na.rm = TRUE)
+mean91
+median(data91$Daily.Max.8.hour.Ozone.Concentration)
+GetMode(data91$Daily.Max.8.hour.Ozone.Concentration)
+```
+
+
+```{r}
+# run function for mean, median, mode, SD, IQR, and skew
+GetMode <- function(x) {
+   uniqv <- unique(x)
+   uniqv[which.max(tabulate(match(x, uniqv)))]
+}
+
+library(moments)
+P5_fun <-function(x) {
+  wq.fun <-c(mean, median, GetMode, sd, IQR, skewness)
+  lapply(wq.fun,function(f)f(x))
+  }
+P5_91ozone <- P5_fun(data91$Daily.Max.8.hour.Ozone.Concentration)
+names(P5_91ozone) <- c("Ozone Mean", "Ozone Median", "Ozone Mode", "Ozone Standard Deviation", "Ozone IQR", "Ozone Skew")
+P5_91ozone
+```
+
+```{r}
+P5_98ozone <- P5_fun(data98$Daily.Max.8.hour.Ozone.Concentration)
+names(P5_98ozone) <- c("Ozone Mean", "Ozone Median", "Ozone Mode", "Ozone Standard Deviation", "Ozone IQR", "Ozone Skew")
+P5_98ozone
+```
+
+```{r}
+P5_08ozone <- P5_fun(data08$Daily.Max.8.hour.Ozone.Concentration)
+names(P5_08ozone) <- c("Ozone Mean", "Ozone Median", "Ozone Mode", "Ozone Standard Deviation", "Ozone IQR", "Ozone Skew")
+P5_08ozone
+```
+
+```{r}
+P5_18ozone <- P5_fun(data18$Daily.Max.8.hour.Ozone.Concentration)
+names(P5_18ozone) <- c("Ozone Mean", "Ozone Median", "Ozone Mode", "Ozone Standard Deviation", "Ozone IQR", "Ozone Skew")
+P5_18ozone
+```
+
+# statisticaly compare years 
+
+```{r}
+t.test(data91$Daily.Max.8.hour.Ozone.Concentration, data98$Daily.Max.8.hour.Ozone.Concentration)
+```
+
+```{r}
+t.test(data91$Daily.Max.8.hour.Ozone.Concentration, data08$Daily.Max.8.hour.Ozone.Concentration)
+```
+
+```{r}
+t.test(data91$Daily.Max.8.hour.Ozone.Concentration, data18$Daily.Max.8.hour.Ozone.Concentration)
+```
+
+```{r}
+t.test(data98$Daily.Max.8.hour.Ozone.Concentration, data08$Daily.Max.8.hour.Ozone.Concentration)
+```
+
+```{r}
+t.test(data98$Daily.Max.8.hour.Ozone.Concentration, data18$Daily.Max.8.hour.Ozone.Concentration)
+```
+
+
+```{r}
+t.test(data08$Daily.Max.8.hour.Ozone.Concentration, data18$Daily.Max.8.hour.Ozone.Concentration)
+```
+
+# results
+
+For the Welch Two Sample t-test, comparing 91 with the other three years resulted in confidence intervals that straddled 0. With those results, 91 cannot reject the Null. I believe the results for 91 compared to the other years is partially due to incomplete data for 91. while the other years are normally distributed, 91 may have issues that would be considered a type 2 (fail to reject aa false Null) error because of its data quality. For 98, 08, and 18, the p value is very small and the confidence intervals, though also small, are each positioned on one side of zero. With those results, combined with the Wilcoxon test performed in part 1, i feel confident in rejecting the Null and concluding that 98, 08, and 18 are different. 
+
+There are many things that contribute to ozone so the causes of differences in years would have to be a combination of these factors. the state of California offers the public information through their air now website (https://www.airnow.gov/index.cfm?action=ozone_facts.index#causes) instructing citizens to be mindful of car exhaust and useage, especially on hot sunny days. suggestions to reduce ozone include car pooling, car maintence, filling up gas tanks during cooler parts of the day, and being mindful of chemical containers to prevent leakage or evaporation. This website also elaborates a bit on how chemical and power plants release compounds that aid in the reactions leading to smog or ozone. Just with this bit of consumer grade information, the list of contributing factors is extensive. Higher temperatures from heat waves or warming trends, more sunny days during drought, and the combination of warmer days in higher numbers are all major contributors. I suspect drought and more sunny days is at least a factor in the different between 08 and 18 ozone levels. 
+
+
+
+
+
+
+
+
